@@ -1,0 +1,90 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Installer test</title>
+<style>
+  body { font-family: sans-serif; margin: 16px; background: #111; color: #eee; max-width: 640px; }
+  .box { border: 1px solid #444; border-radius: 8px; padding: 12px; margin: 12px 0; }
+  .ok { color: #6f6; } .bad { color: #f66; }
+</style>
+<h2>Installer test (reads files only, copies nothing)</h2>
+
+<div class="box">
+  <b>1. Game disc (ISO)</b><br>
+  <input type="file" id="iso" accept=".iso,.xiso,.bin">
+  <div id="isoOut">No file chosen.</div>
+</div>
+
+<div class="box">
+  <b>2. Title update</b><br>
+  <input type="file" id="tu">
+  <div id="tuOut">No file chosen.</div>
+</div>
+
+<script>
+const MB = 1024 * 1024;
+const size = n => (n / (1024 * MB)).toFixed(2) + ' GB';
+const text = (u8, start, len) => String.fromCharCode(...u8.slice(start, start + len));
+
+async function readAt(file, offset, len) {
+  const buf = await file.slice(offset, offset + len).arrayBuffer();
+  return new Uint8Array(buf);
+}
+
+// Xbox 360 disc images start the game partition at one of these offsets.
+const OFFSETS = [
+  [0x00000000, 'plain XISO (starts at 0)'],
+  [0x0FD90000, 'full disc image, XGD2'],
+  [0x02080000, 'full disc image, XGD3'],
+  [0x18300000, 'full disc image, XGD1']
+];
+
+document.getElementById('iso').addEventListener('change', async e => {
+  const out = document.getElementById('isoOut');
+  const f = e.target.files[0];
+  if (!f) return;
+  out.className = '';
+  out.textContent = 'Checking ' + f.name + ' (' + size(f.size) + ')...';
+  try {
+    for (const [off, name] of OFFSETS) {
+      if (off + 0x10000 + 20 > f.size) continue;
+      const b = await readAt(f, off + 0x10000, 20);
+      if (text(b, 0, 20) === 'MICROSOFT*XBOX*MEDIA') {
+        out.className = 'ok';
+        out.textContent = 'Looks like an Xbox 360 disc image: ' + name +
+          '\nFile: ' + f.name + ' (' + size(f.size) + ')';
+        out.style.whiteSpace = 'pre';
+        return;
+      }
+    }
+    out.className = 'bad';
+    out.textContent = 'This does not look like an Xbox 360 disc image. (' + f.name + ', ' + size(f.size) + ')';
+  } catch (err) {
+    out.className = 'bad';
+    out.textContent = 'Could not read the file: ' + err;
+  }
+});
+
+document.getElementById('tu').addEventListener('change', async e => {
+  const out = document.getElementById('tuOut');
+  const f = e.target.files[0];
+  if (!f) return;
+  try {
+    const b = await readAt(f, 0, 4);
+    const magic = text(b, 0, 4);
+    let kind = null;
+    if (magic === 'XEX2') kind = 'a raw title update patch (.xexp)';
+    if (magic === 'CON ' || magic === 'LIVE' || magic === 'PIRS') kind = 'an Xbox 360 package (STFS), the usual title update format';
+    out.style.whiteSpace = 'pre';
+    if (kind) {
+      out.className = 'ok';
+      out.textContent = 'Looks like ' + kind + '\nFile: ' + f.name + ' (' + (f.size / MB).toFixed(1) + ' MB)';
+    } else {
+      out.className = 'bad';
+      out.textContent = 'Not recognised as a title update. (' + f.name + ')';
+    }
+  } catch (err) {
+    out.className = 'bad';
+    out.textContent = 'Could not read the file: ' + err;
+  }
+});
+</script>
