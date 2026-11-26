@@ -1,0 +1,33 @@
+name: web-engine-test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: mymindstorm/setup-emsdk@v14
+
+      - name: Create dummy recompiled files
+        run: |
+          mkdir -p UnleashedRecompLib/ppc UnleashedRecompLib/shader
+          cp tools/XenonRecomp/XenonUtils/ppc_context.h UnleashedRecompLib/ppc/ppc_context.h
+          echo "#pragma once" > UnleashedRecompLib/ppc/ppc_config.h
+          echo '#include "ppc_context.h"' > UnleashedRecompLib/ppc/ppc_recomp_shared.h
+          echo '#include "ppc_recomp_shared.h"' > UnleashedRecompLib/ppc/ppc_func_mapping.cpp
+          for i in $(seq 0 260); do
+            echo '#include "ppc_recomp_shared.h"' > UnleashedRecompLib/ppc/ppc_recomp.$i.cpp
+          done
+          echo "#pragma once" > UnleashedRecompLib/shader/shader_cache.h
+          echo '#include "shader_cache.h"' > UnleashedRecompLib/shader/shader_cache.cpp
+
+      - name: Configure with Emscripten
+        run: |
+          export VCPKG_ROOT=/tmp/dummy_vcpkg
+          mkdir -p $VCPKG_ROOT build-web
+          emcmake cmake -S . -B build-web -DCMAKE_BUILD_TYPE=Release
