@@ -1,0 +1,51 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Input test</title>
+<style>
+  body { font-family: sans-serif; margin: 16px; background: #111; color: #eee; }
+  #state { white-space: pre; font-family: monospace; font-size: 16px; }
+  .hint { color: #999; margin-bottom: 12px; }
+</style>
+<h2>Keyboard and controller test</h2>
+<div class="hint">
+  Click this page, then press keys or controller buttons.<br>
+  Keyboard: arrows = left stick, W/A/S/D = right stick... see the list below.
+</div>
+<div id="state">Waiting for input...</div>
+<script>
+// Default keyboard layout (key -> Xbox 360 name)
+const KEYMAP = {
+  ArrowUp: 'LS Up', ArrowDown: 'LS Down', ArrowLeft: 'LS Left', ArrowRight: 'LS Right',
+  KeyZ: 'A', KeyX: 'B', KeyC: 'X', KeyV: 'Y',
+  KeyQ: 'LB', KeyE: 'RB', Digit1: 'LT', Digit3: 'RT',
+  Enter: 'Start', Backspace: 'Back',
+  KeyW: 'D-Pad Up', KeyS: 'D-Pad Down', KeyA: 'D-Pad Left', KeyD: 'D-Pad Right'
+};
+// Standard gamepad button index -> Xbox 360 name
+const PADMAP = ['A','B','X','Y','LB','RB','LT','RT','Back','Start','LS Click','RS Click',
+                'D-Pad Up','D-Pad Down','D-Pad Left','D-Pad Right','Guide'];
+
+const keys = new Set();
+addEventListener('keydown', e => { if (KEYMAP[e.code]) { keys.add(KEYMAP[e.code]); e.preventDefault(); } });
+addEventListener('keyup',   e => { if (KEYMAP[e.code]) keys.delete(KEYMAP[e.code]); });
+
+function frame() {
+  let text = 'KEYBOARD pressed: ' + ([...keys].join(', ') || '(none)') + '\n\n';
+  const pads = [...navigator.getGamepads()].filter(Boolean);
+  if (!pads.length) text += 'No controller found. Connect one and press any button.\n';
+  for (const p of pads) {
+    const pressed = p.buttons.map((b, i) => b.pressed ? (PADMAP[i] || 'Button ' + i) : null).filter(Boolean);
+    const ax = p.axes.map(a => a.toFixed(2));
+    text += 'CONTROLLER: ' + p.id + '\n' +
+            '  mapping: ' + (p.mapping || 'non-standard') + '\n' +
+            '  pressed: ' + (pressed.join(', ') || '(none)') + '\n' +
+            '  left stick:  x=' + (ax[0] ?? '-') + ' y=' + (ax[1] ?? '-') + '\n' +
+            '  right stick: x=' + (ax[2] ?? '-') + ' y=' + (ax[3] ?? '-') + '\n' +
+            '  triggers: LT=' + (p.buttons[6] ? p.buttons[6].value.toFixed(2) : '-') +
+            ' RT=' + (p.buttons[7] ? p.buttons[7].value.toFixed(2) : '-') + '\n\n';
+  }
+  document.getElementById('state').textContent = text;
+  requestAnimationFrame(frame);
+}
+frame();
+</script>
