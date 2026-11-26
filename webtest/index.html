@@ -1,0 +1,23 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Phase 0 test</title>
+<pre id="out">Starting...</pre>
+<script>
+const out = document.getElementById('out');
+function log(t) { out.textContent += '\n' + t; }
+
+if (!window.crossOriginIsolated) {
+  if ('serviceWorker' in navigator && !sessionStorage.getItem('coiTried')) {
+    sessionStorage.setItem('coiTried', '1');
+    navigator.serviceWorker.register('coi-sw.js').then(() => location.reload());
+  } else {
+    log('Not cross-origin isolated. Threads will not work.');
+  }
+} else {
+  log(navigator.gpu ? 'WebGPU: available' : 'WebGPU: missing');
+  window.Module = { print: log, printErr: log };
+  const s = document.createElement('script');
+  s.src = 'test.js';
+  document.body.append(s);
+}
+</script>
