@@ -4,11 +4,11 @@
 
 ---
 
-Unleashed Recompiled is an unofficial PC port of the Xbox 360 version of Sonic Unleashed created through the process of static recompilation. The port offers Windows and Linux support with numerous built-in enhancements such as high resolutions, ultrawide support, high frame rates, improved performance and modding.
+Unleashed Recompiled is an unofficial Web Browser port of the Xbox 360 version of Sonic Unleashed created through the process of static recompilation. The port offers Chrome and Firefox support with numerous built-in enhancements such as high resolutions, ultrawide support, high frame rates, improved performance and modding.
 
 **This project does not include any game assets. You must provide the files from your own legally acquired copy of the game to install or build Unleashed Recompiled.**
 
-[Check out the latest release here](https://github.com/hedge-dev/UnleashedRecomp/releases/latest).
+Note: This Project is still in development so no there are no releases avaliable now.
 
 [XenonRecomp](https://github.com/hedge-dev/XenonRecomp) and [XenosRecomp](https://github.com/hedge-dev/XenosRecomp) are the main recompilers used for converting the game's original PowerPC code and Xenos shaders into compatible C++ and HLSL code respectively. The development of these recompilers was directly inspired by [N64: Recompiled](https://github.com/N64Recomp/N64Recomp), which was used to create [Zelda 64: Recompiled](https://github.com/Zelda64Recomp/Zelda64Recomp).
 
@@ -18,9 +18,7 @@ Unleashed Recompiled is an unofficial PC port of the Xbox 360 version of Sonic U
 - [How to Install](#how-to-install)
 - [Features](#features)
 - [Update Roadmap](#update-roadmap)
-- [Known Issues](#known-issues)
-- [FAQ](#faq)
-- [Building](#building)
+- [Control Remapping](#control-remapping)
 - [Credits](#credits)
 
 ## Minimum System Requirements
@@ -33,7 +31,7 @@ Unleashed Recompiled is an unofficial PC port of the Xbox 360 version of Sonic U
   - AMD: Radeon HD 7750 (2012, not the RX 7000)
   - Intel: HD Graphics 510 (Skylake)
 - Memory:
-  - 8 GB minimum
+  - 6 GB minimum
 - Operating System:
   - Windows 10 (version 1909)
   - A modern Linux distro such as Ubuntu 22.04 LTS
@@ -202,22 +200,6 @@ Performance has been found to improve significantly when the Deck's GPU clock is
 > [!NOTE]
 > It is recommended to perform the installation process while in Desktop Mode, as the [file picker may not be available in Game Mode](#file-picker-unavailable-on-steam-deck-in-game-mode) at all times.
 
-### Mod Support
-
-The game includes a mod loader compatible with [Hedge Mod Manager](https://github.com/thesupersonic16/HedgeModManager). As an option, users looking for Linux support should try the development version of [HMM 8](https://github.com/hedge-dev/HedgeModManager), which should work out of the box on platforms such as the Steam Deck.
-
-The mod format uses the same standard as the one used by Sonic Generations mods. Mods that were originally created for [Unleashed Mod Manager](https://github.com/hyperbx/Unleashed-Mod-Manager) are also supported for the sake of backwards compatibility. However, using this mod format is not recommended in the long term and should now be considered deprecated.
-
-Modded files for the Xbox 360 version of the game are compatible with Unleashed Recompiled. However, some mods may have targeted a version of the game that doesn't contain the title update, so those may have issues and require updates from their authors in order to work with the recompilation. Mods that replace the game's executable file (`default.xex`) or shaders are not supported.
-
-> [!NOTE]
-> Code modding is currently not possible and is [planned for a future update](#code-modding). As a workaround for the time being, some codes have been directly embedded into the game and can be accessed through Hedge Mod Manager's Codes tab.
->
-> For information on the mod format, check out Hedge Mod Manager's [Basic Mod File Structure](https://github.com/thesupersonic16/HedgeModManager/wiki/Basic-Mod-File-Structure) wiki page.
-
-## Update Roadmap
-
-A number of different features are planned for future updates.
 
 ### Action Remapping
 
@@ -231,84 +213,9 @@ Linux builds that don't require Flatpak will be added in the future when a way t
 
 A number of [gameplay issues](#high-frame-rate-glitches) are currently present that will gradually be fixed as more research into how the game works is done. At the moment, the game is considered to be beatable at high frame rates, but you may be required to limit the game to 60 FPS in order to clear some optional content.
 
-### Code Modding
+### Control Remapping
 
-Modifying the code of a recompilation is a fundamentally different process than doing it for a game that only supports one platform on a single executable version. Everyone can build and fork Unleashed Recompiled on their own, which makes the method of targeting a single executable essentially impossible.
-
-A convenient and maintainable method for code modding is under research and will come in a future update, which will work consistently across all the platforms that Unleashed Recompiled currently supports.
-
-In the meantime, those interested in doing extensive code modding are recommended to fork the repository and introduce their changes in preparation for the code modding update.
-
-### Stance on New Features
-
-The team behind Unleashed Recompiled is committed to preserving the game's original design as best as possible. Additional features that don't fit the vision of the project will be left to mods or forks to cover. As such, requests for such features will not be considered. If you request a new feature, make sure it makes sense within the design of the original game and fits the goal of delivering a PC version of the game.
-
-## Known Issues
-
-### Unavoidable Stutters
-
-While Unleashed Recompiled does its best effort on fixing any hitches and stutters that could originate from the translation process, some problems are not possible to fix due to the way the game was built.
-
-Even if the recompilation process introduces a small overhead, the game does not perform some tasks in an asynchronous way. These stutters exist on original hardware, but are much more noticeable when targeting higher frame rates.
-
-Most of the known stutters are related to the game loading in layers of new objects at certain points in stages, spawning in particle systems or playing multiple sound effects. These operations can produce pauses that can last almost 10 milliseconds, even on powerful hardware. These hitches are much easier to notice when targeting frame rates such as 120 FPS, where one frame only lasts around 8 milliseconds.
-
-These problems are not possible to mitigate without further research into how the game works and will remain a goal for future updates to fix if possible. However, [as mentioned in the FAQ](#how-can-i-improve-performance), it's been found that these stutters can be significantly mitigated by playing on Linux, possibly due to the amount of synchronization primitives used by the game when these operations are performed.
-
-### High Frame Rate Glitches
-
-Sonic Unleashed is not a game that runs at a fixed rate on any of its target platforms. While it does target 30 FPS on Xbox 360 and is uncapped on PlayStation 3, it doesn't exactly hit these targets often depending on the area, and if it does, the time step itself is subject to large deviations. The game's programming simply follows the time step as closely as possible, which means inconsistencies in the time step are impossible to reproduce without targeting one exact piece of hardware.
-
-A lot of the bugs present in the game can largely be explained by sudden spikes in frame times. To make matters worse, some bugs were found to be present only if the frame rate is too stable, such as this [infamous bug](https://github.com/hedge-dev/UnleashedRecomp/issues/100) that shows up in the Wii version of the game because the cutscene was recorded with a fixed time step.
-
-Unleashed Recompiled features a vast amount of fixes for issues that present themselves when targeting high frame rates, but fixing *all of them* is too big of a task without more knowledge of how the game works. It is possible that these issues will be fixed in the future or that alternative solutions such as transform interpolation are implemented instead.
-
-If you encounter game breaking bugs or unplayable sections, try temporarily limiting the frame rate to resolve them. Also, check the [Issues](https://github.com/hedge-dev/UnleashedRecomp/issues) page for any existing reports.
-
-### Ultrawide Visual Issues
-
-Visual oddities may occur when unlocking the aspect ratio during cutscenes, as the game was not designed for wider formats. Adjusting these scenes can be subjective, so it will be up to mods to address these issues, as they require modifying the game's animations and object placement within cutscene files.
-
-### Original Game Bugs
-
-Game bugs present on the original hardware are intentionally preserved and will not be fixed. Please do not report issues for these bugs and verify that the issue does not occur on original hardware before reporting. Bug reports for issues found in the original game will be rejected. Bugs that only happen in Unleashed Recompiled must be accompanied by footage captured on original Xbox 360 hardware showing that the bug does not happen there.
-
-### File Picker Unavailable on Steam Deck in Game Mode
-
-Due to some restrictions of how the desktop environment on the Steam Deck works whilst in Game Mode, please note that you may need to at least first boot into Desktop Mode to be able to use the file picker to provide the game files.
-
-Simply booting at least once in Desktop Mode will enable the Deck to use the file picker when going back to Game Mode. You can complete the entire installation process while in Desktop Mode to save yourself the trouble of browsing through Game Mode if necessary.
-
-## FAQ
-
-### Do you have a website or Discord server?
-
-Unleashed Recompiled does not have an official website, nor is it affiliated with any Discord servers.
-
-**Please link here when directing anyone to the project.**
-
-> [!CAUTION]
-> Do not download builds of Unleashed Recompiled from anywhere but our [Releases](https://github.com/hedge-dev/UnleashedRecomp/releases/latest) page.
->
-> **We will never distribute builds on other websites, via Discord servers or via third-party update tools.**
-
-### Why does the installer say my files are invalid?
-
-The installer may display this error for several reasons. Please check the following to ensure your files are valid:
-
-- Please read the [How to Install](#how-to-install) section and make sure you've acquired all of the necessary files correctly.
-
-- Verify that you're not trying to add compressed files such as `.zip`, `.7z`, `.rar` or other formats.
-
-- Only use the **Add Folder** option if you're sure you have a directory with the content's files already extracted, which means it'll only contain files like `.xex`, `.ar.00`, `.arl` and others. **This option will not scan your folder for compatible content**.
-
-- Ensure that the files you've acquired correspond to the same region. **Discs and Title Updates from different regions can't be used together** and will fail to generate a patch.
-
-- The installer will only accept **original and unmodified files**. Do not attempt to provide modified files to the installer.
-
-### What are the keyboard bindings?
-
-Pad|Key
+Keyboard controls
 -|-
 A (Cross)|S
 B (Circle)|D
@@ -341,95 +248,6 @@ Refer to the left column of [this enum template](https://github.com/hedge-dev/Un
 
 *The default keyboard layout is based on Devil's Details' keyboard layout for Sonic Generations (2011)*.
 
-### Where is the save data and configuration file stored?
-
-The save data and configuration files are stored at the following locations:
-
-- Windows: `%APPDATA%\UnleashedRecomp\`
-- Linux: `~/.config/UnleashedRecomp/`
-
-You will find the save data under the `save` folder (or `mlsave`, if using Hedge Mod Manager's save file redirection). The configuration file is named `config.toml`.
-
-### I want to update the game. How can I avoid losing my save data? Do I need to reinstall the game?
-
-Updating the game can be done by simply copying and replacing the files from a [release](https://github.com/hedge-dev/UnleashedRecomp/releases) on top of your existing installation. **Your save data and configuration will not be lost.** You won't need to reinstall the game, as the game files will always remain the same across versions of Unleashed Recompiled.
-
-### How can I force the game to store the save data and configuration in the installation folder?
-
-You can make the game ignore the [default configuration paths](#where-is-the-save-data-and-configuration-file-stored) and force it to save everything in the installation directory by creating an empty `portable.txt` file. You are directly responsible for the safekeeping of your save data and configuration if you choose this option.
-
-### How can I install mods?
-
-**Do not install mods by modifying the game data**. Use [Hedge Mod Manager](https://github.com/thesupersonic16/HedgeModManager) instead. You will not get support for modifying your game files directly.
-
-> [!WARNING]
-> Unleashed Mod Manager is not recommended for use with Unleashed Recompiled, as it can make permanent changes to your game files.
-
-### How can I force the game to run the installation again?
-
-While it's unlikely you'll need to do this unless you've modified your game files by accident, you can force the installer to run again by using the launch argument: `--install`.
-
-### How can I force the game to run under X11 or Wayland?
-
-Use either of the following arguments to force SDL to run under the video driver you want:
-
-- X11: `--sdl-video-driver x11`
-- Wayland: `--sdl-video-driver wayland`
-
-The second argument will be passed directly to SDL as a hint to try to initialize the game with your preferred option.
-
-### Where is the game data for the Flatpak version installed?
-
-Given it is not possible to run the game where the Flatpak is stored, the game data will be installed to `~/.var/app/io.github.hedge_dev.unleashedrecomp/data`. The Flatpak build will only recognize this directory as valid. Feel free to reuse this data directory with a native Linux build if you wish to switch in the future.
-
-If you wish to move this data to another location, you can do so by creating a symlink from this directory to the one where you'll migrate your installation to.
-
-### How can I improve performance?
-
-You can lower the values of some of the following graphics options to improve performance. Other options may help, but these usually have the biggest impact:
-
-- Resolution Scale
-- Anti-Aliasing
-- Shadow Resolution
-
-If you want a detailed performance report along with relevant system information, press F1 to view multiple performance graphs. This will aid in the process of gathering as much information as possible in order to identify the problem.
-
-When using a system with multiple GPUs (such as a gaming laptop), please make sure that the game has chosen your dedicated graphics adapter and not your integrated one. The F1 menu will display which device has been selected by its name along with other options that might be available. If you're unable to get the game to select the correct device, you can attempt to override this by changing the `GraphicsDevice` property in `config.toml`. The name of the device must be an exact match.
-
-Some of the game's more demanding sections require strong CPU single-thread performance. While the recompilation process adds minimal CPU overhead, modern hardware is typically bottlenecked by this factor before the GPU.
-
-Linux has an unexpected advantage when it comes to CPU performance, showing improvements in CPU-bound scenarios. It's currently speculated that this could be due to the heavy amount of thread synchronization the game performs, an operation that is likely to be more performant on Linux's CPU scheduler than on Windows' scheduler. If you wish to gain some additional performance, playing on Linux instead of Windows could yield better results.
-
-> [!WARNING]
-> Using external frame rate limiters or performance overlays may degrade performance or have negative consequences.
-
-### Can I install the game with a PlayStation 3 copy?
-
-**You cannot use the files from the PlayStation 3 version of the game.** Supporting these files would require an entirely new recompilation, as they have proprietary formatting that only works on PS3 and the code for these formats is only present in that version. All significant differences present in the PS3 version of the game have been included in this project as options.
-
-### Can I install the game with a Japanese copy?
-
-The Japanese version of Sonic Unleashed has some minor differences in both file structure and content that make this version of the game incompatible with the international release. Furthermore, the US and EU versions of the game already support Japanese. Supporting this version would only cause mod compatibility issues in the future, so it is unlikely to be added to the update roadmap as it would also require its own recompilation.
-
-### Why is the game detecting my PlayStation controller as an Xbox controller?
-
-If you're using a third-party input translation layer (such as DS4Windows or Steam Input), it is recommended that you disable these for full controller support.
-
-### Will macOS be supported?
-
-While macOS is not currently on the roadmap, this project welcomes any effort to add support for this platform. Unleashed Recompiled relies on [plume](https://github.com/renderbag/plume), a rendering hardware abstraction layer that will be getting support for Metal in the near future. You can join the macOS discussion on [this issue](https://github.com/hedge-dev/UnleashedRecomp/issues/455).
-
-### What other platforms will be supported?
-
-This project does not plan to support any more platforms other than Windows, Linux and potentially macOS at the moment. Any contributors who wish to support more platforms should do so through a fork.
-
-### Do you have plans to recompile other Xbox 360 games or Sonic games?
-
-The team behind Unleashed Recompiled does not currently have any plans to port more Xbox 360 games or Sonic games. Anyone is free to look into [XenonRecomp](https://github.com/hedge-dev/XenonRecomp) if they wish to investigate these opportunities.
-
-## Building
-
-[Check out the building instructions here](/docs/BUILDING.md).
 
 ## Credits
 
@@ -478,3 +296,5 @@ The team behind Unleashed Recompiled does not currently have any plans to port m
 - [ocornut](https://github.com/ocornut): Creator of [Dear ImGui](https://github.com/ocornut/imgui), which is used as the backbone of the custom menus.
 
 - Raymond Chen: Useful resources on Windows application development with his blog ["The Old New Thing"](https://devblogs.microsoft.com/oldnewthing/).
+
+- Special thanks to Claude AI for instructing me to make it. https://claude.ai/chat/3085541f-5b5f-438b-80b6-b0769ee1a244
