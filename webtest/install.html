@@ -1,0 +1,171 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Installer</title>
+<style>
+  body { font-family: sans-serif; margin: 16px; background: #111; color: #eee; max-width: 680px; }
+  .box { border: 1px solid #444; border-radius: 8px; padding: 12px; margin: 12px 0; }
+  .ok { color: #6f6; } .bad { color: #f66; }
+  button { padding: 8px 16px; margin: 4px 4px 0 0; }
+</style>
+<h2>Installer (test version)</h2>
+<div id="status" class="box">Checking...</div>
+
+<div id="setup" class="box" hidden>
+  <b>1. Game disc (ISO)</b><br>
+  <input type="file" id="iso" accept=".iso,.xiso,.bin">
+  <div id="isoOut">No file chosen.</div><br>
+  <b>2. Title update</b><br>
+  <input type="file" id="tu">
+  <div id="tuOut">No file chosen.</div><br>
+  <div id="space"></div>
+  <button id="go" disabled>Install</button>
+  <progress id="bar" value="0" max="1" style="width:100%" hidden></progress>
+  <div id="prog"></div>
+</div>
+
+<div id="done" class="box" hidden>
+  <div id="doneInfo"></div>
+  <div>Next time you open this page it will skip the installer and go straight to the game.</div>
+  <button id="start">Start game</button>
+</div>
+
+<div class="box">
+  <button id="wipe">Delete installed data</button>
+  <span style="color:#999">Use this to start over or clean up a failed install.</span>
+</div>
+
+<script>
+const GB = 1024 ** 3, MB = 1024 ** 2, SECTOR = 2048;
+const $ = id => document.getElementById(id);
+const fmt = n => n >= GB ? (n / GB).toFixed(2) + ' GB' : (n / MB).toFixed(1) + ' MB';
+const OFFSETS = [0, 0x0FD90000, 0x02080000, 0x18300000];
+let isoFile = null, files = null, tuFile = null, isoTotal = 0, free = 0;
+
+const ascii = (u8, s, l) => String.fromCharCode(...u8.slice(s, s + l));
+async function readAt(f, off, len) { return new Uint8Array(await f.slice(off, off + len).arrayBuffer()); }
+
+async function findPartition(f) {
+  for (const off of OFFSETS) {
+    if (off + 0x10000 + 0x800 > f.size) continue;
+    const b = await readAt(f, off + 0x10000, 20);
+    if (ascii(b, 0, 20) === 'MICROSOFT*XBOX*MEDIA') return off;
+  }
+  return -1;
+}
+
+async function listFiles(f, off) {
+  const vd = new DataView((await readAt(f, off + 0x10000, 0x800)).buffer);
+  const rootSector = vd.getUint32(0x14, true), rootSize = vd.getUint32(0x18, true);
+  const out = [];
+  async function walk(sector, size, prefix) {
+    if (!size) return;
+    const buf = await readAt(f, off + sector * SECTOR, size);
+    const dv = new DataView(buf.buffer);
+    const seen = new Set(), stack = [0];
+    while (stack.length) {
+      const o = stack.pop();
+      if (seen.has(o) || o + 14 > size) continue;
+      seen.add(o);
+      const left = dv.getUint16(o, true), right = dv.getUint16(o + 2, true);
+      if (left === 0xFFFF) continue; // padding
+      const sec = dv.getUint32(o + 4, true), sz = dv.getUint32(o + 8, true);
+      const attr = buf[o + 12], nl = buf[o + 13];
+      const name = ascii(buf, o + 14, nl);
+      if (attr & 0x10) await walk(sec, sz, prefix + name + '/');
+      else out.push({ path: prefix + name, start: off + sec * SECTOR, size: sz });
+      if (left) stack.push(left * 4);
+      if (right) stack.push(right * 4);
+    }
+  }
+  await walk(rootSector, rootSize, '');
+  return out;
+}
+
+async function dirAt(root, parts) {
+  let d = root;
+  for (const p of parts) d = await d.getDirectoryHandle(p, { create: true });
+  return d;
+}
+async function copyRange(file, start, len, root, path, onBytes) {
+  const parts = path.split('/'); const name = parts.pop();
+  const d = await dirAt(root, parts);
+  const fh = await d.getFileHandle(name, { create: true });
+  const w = await fh.createWritable();
+  const counter = new TransformStream({ transform(c, ctl) { onBytes(c.byteLength); ctl.enqueue(c); } });
+  await file.slice(start, start + len).stream().pipeThrough(counter).pipeTo(w);
+}
+
+function check() {
+  if (!files || !tuFile) { $('go').disabled = true; return; }
+  const need = isoTotal + tuFile.size + 0.5 * GB;
+  const ok = free >= need;
+  $('space').className = ok ? 'ok' : 'bad';
+  $('space').textContent = 'Needs about ' + fmt(need) + ', browser has ' + fmt(free) + ' free.' +
+    (ok ? '' : ' Not enough space. Free up storage first.');
+  $('go').disabled = !ok;
+}
+
+$('iso').addEventListener('change', async e => {
+  const f = e.target.files[0]; if (!f) return;
+  files = null; isoFile = f; $('isoOut').className = ''; $('isoOut').textContent = 'Reading disc...';
+  try {
+    const off = await findPartition(f);
+    if (off < 0) { $('isoOut').className = 'bad'; $('isoOut').textContent = 'Not an Xbox 360 disc image.'; return; }
+    files = await listFiles(f, off);
+    isoTotal = files.reduce((a, x) => a + x.size, 0);
+    $('isoOut').className = 'ok';
+    $('isoOut').textContent = files.length + ' files, ' + fmt(isoTotal) + ' of game data found.';
+    const est = await navigator.storage.estimate(); free = est.quota - est.usage;
+    check();
+  } catch (err) { $('isoOut').className = 'bad'; $('isoOut').textContent = 'Could not read the disc: ' + err; }
+});
+
+$('tu').addEventListener('change', async e => {
+  const f = e.target.files[0]; if (!f) return;
+  const m = ascii(await readAt(f, 0, 4), 0, 4);
+  if (['XEX2', 'CON ', 'LIVE', 'PIRS'].includes(m)) {
+    tuFile = f; $('tuOut').className = 'ok'; $('tuOut').textContent = 'OK: ' + f.name + ' (' + fmt(f.size) + ')';
+  } else { tuFile = null; $('tuOut').className = 'bad'; $('tuOut').textContent = 'Not recognised as a title update.'; }
+  check();
+});
+
+$('go').addEventListener('click', async () => {
+  $('go').disabled = true; $('bar').hidden = false;
+  const root = await navigator.storage.getDirectory();
+  const total = isoTotal + tuFile.size; let done = 0;
+  const upd = n => { done += n; $('bar').value = done / total; $('prog').textContent = fmt(done) + ' of ' + fmt(total); };
+  try {
+    for (const f of files) await copyRange(isoFile, f.start, f.size, root, 'game/' + f.path, upd);
+    await copyRange(tuFile, 0, tuFile.size, root, 'update/' + tuFile.name, upd);
+    const fh = await root.getFileHandle('installed.json', { create: true });
+    const w = await fh.createWritable();
+    await w.write(JSON.stringify({ time: Date.now(), files: files.length, bytes: total, update: tuFile.name }));
+    await w.close();
+    refresh();
+  } catch (e) {
+    $('prog').className = 'bad';
+    $('prog').textContent = 'Install failed: ' + e + '. Press "Delete installed data" and try again.';
+  }
+});
+
+$('wipe').addEventListener('click', async () => {
+  const root = await navigator.storage.getDirectory();
+  for (const n of ['game', 'update', 'installed.json']) { try { await root.removeEntry(n, { recursive: true }); } catch {} }
+  location.reload();
+});
+
+$('start').addEventListener('click', () => alert('The game engine is not built yet. This button will start the game.'));
+
+async function refresh() {
+  const root = await navigator.storage.getDirectory();
+  let info = null;
+  try { info = JSON.parse(await (await (await root.getFileHandle('installed.json')).getFile()).text()); } catch {}
+  $('done').hidden = !info; $('setup').hidden = !!info;
+  if (info) $('doneInfo').textContent = 'Installed ' + new Date(info.time).toLocaleString() + ': ' + info.files + ' files, ' + fmt(info.bytes) + '.';
+  let persisted = false;
+  try { persisted = await navigator.storage.persist(); } catch {}
+  const est = await navigator.storage.estimate();
+  $('status').textContent = 'Browser storage: ' + fmt(est.usage) + ' used of ' + fmt(est.quota) + '. Kept permanently: ' + (persisted ? 'yes' : 'not guaranteed');
+}
+refresh();
+</script>
